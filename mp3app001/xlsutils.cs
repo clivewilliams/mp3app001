@@ -345,6 +345,15 @@ namespace mp3app001
                 return 0;
         }
 
+        public static decimal GetCellAsInteger(ref ExcelFile xls, int row, int col, string sheetname = "", bool valueonly = false)
+        {
+            string s = GetCell(ref xls, row, col, sheetname, valueonly);
+            if (Information.IsNumeric(s))
+                return System.Convert.ToInt32(s);
+            else
+                return 0;
+        }
+
 
         public static DateTime GetCellAsDate(ref ExcelFile xls, int row, int col, string sheetname = "", bool valueonly = false)
         {

@@ -184,14 +184,10 @@ namespace mp3app001
                 if (Directory.Exists(tbOutputs.Text))
                 {
                     DirectoryInfo di = new DirectoryInfo(tbOutputs.Text);
-                    string oldest1 = "";
-                    string oldest2 = "";
+                    string oldest1 = "aaaa";
+                    string oldest2 = "aaaa";
                     foreach (FileInfo f in  di.GetFiles())
                     {
-                        if (oldest1 == "")
-                        {
-                            oldest1 = f.Name;
-                        }
                         if (f.Extension == ".xlsx")
                         {
                             if (Strings.Left(f.Name, 6) == "stage1")
@@ -248,6 +244,7 @@ namespace mp3app001
             }
 
             xls.Save(fn2);
+            tbStage2.Text = fn2;
             MessageBox.Show("Done.", "MP3 App", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
@@ -415,11 +412,11 @@ namespace mp3app001
 
                 if (trackno > 0)
                 {
-                    xlsutils.SetCellString((trackno.ToString("00") + " " + trackname).Trim() + ".mp3", ref xls, line, 11);
+                    xlsutils.SetCellString((trackno.ToString("00") + " " + trackname).Replace("/","").Trim() + ".mp3", ref xls, line, 11);
                 }
                 else
                 {
-                    xlsutils.SetCellString(trackname.Trim() + ".mp3", ref xls, line, 11);
+                    xlsutils.SetCellString(trackname.Replace("/","").Trim() + ".mp3", ref xls, line, 11);
                 }
                 xlsutils.SetCellInt(trackno, ref xls, line, 16);
 
@@ -443,7 +440,7 @@ namespace mp3app001
             string fn3 = fn2.Replace("stage2", "stage3");
             ExcelFile xls = new XlsFile(true); //Create a new file.
             xls.Open(fn2); //Import the csv text.     
-            DoStage3(tbOutputs.Text, ref xls);
+            DoStage3(tbOutputs.Text, ref xls, fn3.Replace(".xlsx", ".txt"));
             if (File.Exists(fn3))
             {
                 try
@@ -460,29 +457,129 @@ namespace mp3app001
             MessageBox.Show("Done.", "MP3 App", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void DoStage3(string outdir, ref ExcelFile xls)
+        private void Log(string logfile, string msg)
         {
-            int line = 2;
+            using (StreamWriter sw = File.AppendText(logfile))
+            {
+                sw.WriteLine(DateAndTime.Now.ToString("yyyy-MM-dd hh:mm:ss") + " >> " + msg) ;
+            }
+        }
 
+        private void DoStage3(string outdir, ref ExcelFile xls, string logfile)
+        {
+            Log(logfile, "Start " + xls.ActiveFileName);
+            int line = 2;
             while (true)
             {
                 string root = xlsutils.GetCell(ref xls, line, 1);
-                if (dir == "")
+                if (root == "")
                 {
+                    Log(logfile, "End");
                     return;
                 }
 
                 // 1 root 2 dir 3 fn 4  artist 5 album 6 artist2 7 trackname 8 tracknum 9 size 
                 // 10 newdir 11 newfn 12 newartist 13 newalbum 14 newartist2 15 newtrackname 16 newtracknum 17 what
-                string dir = xlsutils.GetCell(ref xls, line, 1);
-                string fn = xlsutils.GetCell(ref xls, line, 1);
-                string newdir = xlsutils.GetCell(ref xls, line, 1);
-                string newfn = xlsutils.GetCell(ref xls, line, 1);
+                string dir = xlsutils.GetCell(ref xls, line, 2);
+                string fn = xlsutils.GetCell(ref xls, line, 3);
+                string newdir = xlsutils.GetCell(ref xls, line, 10);
+                string newfn = xlsutils.GetCell(ref xls, line, 11);
+                string newartist = xlsutils.GetCell(ref xls, line, 12);
+                string newalbum = xlsutils.GetCell(ref xls, line, 13);
+                string newartist2 = xlsutils.GetCell(ref xls, line, 14);
+                string newtrackname = xlsutils.GetCell(ref xls, line, 15);
+                uint newtracknum = (uint)xlsutils.GetCellAsInteger(ref xls, line, 16);
+                newdir = newdir.Replace(">", "").Replace("<", "").Replace("..", ".").Replace(",", " ").Replace("&", " and ");
+                newfn = newfn.Replace(">", "").Replace("<", "").Replace("..", ".").Replace(",", " ").Replace("&", " and ");
+                newdir = Regex.Replace(newdir, "[+\\*\\/={}#;:@\\?]", string.Empty);
+                newfn = Regex.Replace(newfn, "[+\\*\\/={}#;:@\\?]", string.Empty);
+                newdir = Regex.Replace(newdir, "  *", " ");
+                newfn = Regex.Replace(newfn, "  *", " ");
+                if (newfn.Length > 50)
+                {
+                    newfn = Strings.Left(Path.GetFileNameWithoutExtension(newfn), 50) + Path.GetExtension(newfn);
+                }
+                string oldpath = "";
+                string tmppath = "";
 
-                string oldpath = Path.Combine(root, dir, fn);
-                string newpath = Path.Combine(outdir, newdir, newfn);
+                string what = "OK";
+                try
+                {
+                    oldpath = Path.Combine(root, dir, fn);
+                    tmppath = "c:\\temp\\" + newfn;
+
+                    Directory.CreateDirectory(Path.Combine(outdir, newdir));
+                    if (File.Exists(tmppath))
+                    {
+                        File.SetAttributes(tmppath, FileAttributes.Normal);
+                        File.Delete(tmppath);
+                    }
+                    File.Copy(oldpath, tmppath, true);
+                    File.SetAttributes(tmppath, FileAttributes.Normal);
+                }
+                catch (Exception ex)
+                {
+                    what = "FILECOPY TMP: " + ex.Message;
+                    Log(logfile, "ERROR: " + what + " >> " + oldpath + " >> " + tmppath);
+                    Console.WriteLine(what);
+                }
+
+                try
+                {
+                    if (what == "OK")
+                    {
+                        TagLib.File file = TagLib.File.Create(tmppath); // Change file path accordingly.
+                        file.Tag.Title = newtrackname;
+                        file.Tag.Album = newalbum;
+                        file.Tag.Track = newtracknum;
+                        string[] a = { newartist };
+                        string[] a2 = { newartist2 };
+
+                        file.Tag.AlbumArtists = a;
+                        file.Tag.Artists = a2;
+
+                        var year = file.Tag.Year;
+
+                        // Save Changes:
+                        file.Save();
+                    }
+                } catch (Exception ex)
+                {
+                    what = "TAG: " + ex.Message;
+                    Console.WriteLine(what);
+                    Log(logfile, "ERROR: " + what + " >> " + tmppath);
+                }
+
+                string newpath = "";
+
+                try
+                {
+                    newpath = Path.Combine(outdir, newdir, newfn);
+                    tmppath = "c:\\temp\\" + newfn;
+
+                    Directory.CreateDirectory(Path.Combine(outdir, newdir));
+                    File.Copy(tmppath, newpath, true);
+                    File.Delete(tmppath);
+                }
+                catch (Exception ex)
+                {
+                    what = "FILECOPY PLEX: " + ex.Message;
+                    Log(logfile, "ERROR: " + what + " >> " + tmppath + " >> " + newpath);
+                    Console.WriteLine(what);
+                }
+
+
+
+                Console.WriteLine(line.ToString() + ": " + newpath);
+                xlsutils.SetCellString(what, ref xls, line, 17);
+                xlsutils.SetCellString(oldpath, ref xls, line, 18);
+                xlsutils.SetCellString(newpath, ref xls, line, 19);
 
                 line++;
+                if (line % 100 == 0)
+                {
+                    Log(logfile, "TICK: " + line.ToString());
+                }
             }
         }
     }

@@ -90,7 +90,7 @@
             this.tbInputs.Name = "tbInputs";
             this.tbInputs.Size = new System.Drawing.Size(349, 20);
             this.tbInputs.TabIndex = 1;
-            this.tbInputs.Text = "D:\\Music\\LibLaptop;D:\\Music\\Lib";
+            this.tbInputs.Text = "d:\\music\\importme";
             // 
             // label1
             // 
@@ -120,7 +120,7 @@
             this.tbOutputs.Name = "tbOutputs";
             this.tbOutputs.Size = new System.Drawing.Size(486, 20);
             this.tbOutputs.TabIndex = 4;
-            this.tbOutputs.Text = "h:\\plex\\mp3";
+            this.tbOutputs.Text = "h:\\plex\\music";
             // 
             // label2
             // 
