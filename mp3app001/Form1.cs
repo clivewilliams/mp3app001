@@ -5,6 +5,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Linq;
@@ -29,7 +30,7 @@ namespace mp3app001
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Version 001", "MP3 App", MessageBoxButtons.OK);
+            MessageBox.Show("Version 004", "MP3 App", MessageBoxButtons.OK);
         }
 
         int line = 0;
@@ -158,6 +159,8 @@ namespace mp3app001
                         uint tracknumber = tagFile.Tag.Track;
                         xlsutils.SetCellInt((int)tracknumber, ref xls, line, 8);
                         if (line % 100 == 0) {
+                            tbStatus.AppendText(line.ToString() + Environment.NewLine);
+                            tbStatus.ScrollToCaret();
                             Console.WriteLine(line.ToString());
                             Application.DoEvents();
                         }
@@ -571,6 +574,10 @@ namespace mp3app001
 
 
                 Console.WriteLine(line.ToString() + ": " + newpath);
+                tbStatus.AppendText(line.ToString() + Environment.NewLine);
+                tbStatus.ScrollToCaret();
+                Application.DoEvents();
+
                 xlsutils.SetCellString(what, ref xls, line, 17);
                 xlsutils.SetCellString(oldpath, ref xls, line, 18);
                 xlsutils.SetCellString(newpath, ref xls, line, 19);
@@ -581,6 +588,188 @@ namespace mp3app001
                     Log(logfile, "TICK: " + line.ToString());
                 }
             }
+        }
+
+        private void DoStage5(string outdir, ref ExcelFile xls)
+        {
+            int line = 2;
+            while (true)
+            {
+                string root = xlsutils.GetCell(ref xls, line, 1);
+                if (root == "")
+                {
+                    return;
+                }
+
+                // 1 root 2 dir 3 fn 4  artist 5 album 6 artist2 7 trackname 8 tracknum 9 size 
+                // 10 newdir 11 newfn 12 newartist 13 newalbum 14 newartist2 15 newtrackname 16 newtracknum 17 what
+                string fn = xlsutils.GetCell(ref xls, line, 3).Trim();
+                string album = xlsutils.GetCell(ref xls, line, 5).Trim();
+                string trackname = xlsutils.GetCell(ref xls, line, 7).Trim();
+                string tracknum = xlsutils.GetCell(ref xls, line, 8).Trim();
+                string mydir = xlsutils.GetCell(ref xls, line, 2).Trim();
+                string flag = xlsutils.GetCell(ref xls, line, 10).Trim();
+                if (flag != "x") {
+                    line = line + 1;
+                    continue;
+                }
+                string newdir = mydir.Replace(root, outdir);
+                if (File.Exists(Path.Combine(newdir, fn)))
+                {
+                    File.Delete(Path.Combine(newdir, fn));
+                }
+
+                Directory.CreateDirectory(newdir);
+                File.Copy(Path.Combine(mydir, fn), Path.Combine(newdir, fn));
+
+
+                Console.WriteLine(Path.Combine(newdir, fn));
+                tbStatus.AppendText(Path.Combine(newdir, fn).ToString() + Environment.NewLine);
+                tbStatus.ScrollToCaret();
+                Application.DoEvents();
+
+                line++;
+            }
+        }
+
+        private void button2_Click(object sender, EventArgs e)
+        {
+            FileInfo fi = new FileInfo(tbStage1.Text);
+            if (fi.Exists)
+            {
+                System.Diagnostics.Process.Start(tbStage1.Text);
+            }
+            else
+            {
+                //file doesn't exist
+            }
+        }
+
+        private void button3_Click(object sender, EventArgs e)
+        {
+            FileInfo fi = new FileInfo(tbStage2.Text);
+            if (fi.Exists)
+            {
+                System.Diagnostics.Process.Start(tbStage2.Text);
+            }
+            else
+            {
+                //file doesn't exist
+            }
+        }
+
+        private void btnOpenIndexFile_Click(object sender, EventArgs e)
+        {
+            FileInfo fi = new FileInfo(tbIndexFile.Text);
+            if (fi.Exists)
+            {
+                System.Diagnostics.Process.Start(tbIndexFile.Text);
+            }
+            else
+            {
+                //file doesn't exist
+            }
+        }
+
+        private void btnStage4_Click(object sender, EventArgs e)
+        {
+            string outputs = tbOutputs.Text;
+
+            Directory.CreateDirectory(outputs);
+            ExcelFile xls = null;
+            string fn = Path.Combine(outputs, "stage4-" + DateTime.Now.ToString("yyyy-MM-dd-hh-mm-ss") + ".xlsx");
+            string r = "";
+            r = xlsutils.OpenXLS(ref xls);
+            xlsutils.SetCellString("root", ref xls, 1, 1);
+            xlsutils.SetCellString("dir", ref xls, 1, 2);
+            xlsutils.SetCellString("fn", ref xls, 1, 3);
+            xlsutils.SetCellString("artist", ref xls, 1, 4);
+            xlsutils.SetCellString("album", ref xls, 1, 5);
+            xlsutils.SetCellString("artist2", ref xls, 1, 6);
+            xlsutils.SetCellString("trackname", ref xls, 1, 7);
+            xlsutils.SetCellString("tracknum", ref xls, 1, 8);
+            xlsutils.SetCellString("size", ref xls, 1, 9);
+            xlsutils.SetCellString("selected", ref xls, 1, 10);
+            line = 2;
+
+            ProcessDir(ref xls, outputs, outputs);
+            xls.Save(fn);
+            tbIndexFile.Text = fn;
+            MessageBox.Show("Done.", "MP3 App", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+        }
+
+        private void button4_Click(object sender, EventArgs e) // stage 5 button
+        {
+
+            string fn3 = tbIndexFile.Text;
+            ExcelFile xls = new XlsFile(true); //Create a new file.
+            xls.Open(fn3); //Import the csv text.     
+            DoStage5(tbExternalDrive.Text, ref xls);
+
+            MessageBox.Show("Done.", "MP3 App", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+        }
+
+        private void btnBuildMP3_Click(object sender, EventArgs e)
+        {
+            string readdir = tbVideoDir.Text;
+            string mp3dir = tbMP3Dir.Text;
+
+            MP3Dirs(readdir, mp3dir);
+        }
+
+        private void MP3Dirs(string readdir, string mp3dir)
+        {
+            if (Directory.Exists(readdir))
+            {
+                Directory.CreateDirectory(mp3dir);
+                DirectoryInfo di = new DirectoryInfo(readdir);
+                foreach (DirectoryInfo di2 in di.GetDirectories())
+                {
+                    MP3Dirs(Path.Combine(readdir, di2.Name), Path.Combine(mp3dir, di2.Name));
+                }
+                foreach (FileInfo fi2 in di.GetFiles())
+                {
+                    if (fi2.Name.EndsWith(".mp4"))
+                    {
+                            MP3Files(Path.Combine(readdir, fi2.Name), Path.Combine(mp3dir, Path.GetFileNameWithoutExtension(fi2.FullName) + ".mp3"));
+                    }
+                }
+            }
+            else
+            {
+                tbStatus.AppendText("No directory: " + readdir + Environment.NewLine);
+                tbStatus.ScrollToCaret();
+                Application.DoEvents();
+            }
+        }
+
+        private void MP3Files(string readfile, string mp3file)
+        {
+            if (File.Exists(mp3file))
+            {
+                tbStatus.AppendText(mp3file + " exists" + Environment.NewLine);
+                tbStatus.ScrollToCaret();
+                Application.DoEvents();
+                return;
+            }
+            
+            var ffmpegProcess = new Process();
+            ffmpegProcess.StartInfo.FileName = "D:\\Apps\\ffmpeg\\bin\\ffmpeg.exe";
+            ffmpegProcess.StartInfo.Arguments = " -i \"" + readfile + "\" -vn -f mp3 -ab 320k \"" + mp3file + "\"";
+            tbStatus.AppendText(ffmpegProcess.StartInfo.FileName + " " + ffmpegProcess.StartInfo.Arguments + Environment.NewLine);
+            tbStatus.ScrollToCaret();
+            Application.DoEvents();
+
+            ffmpegProcess.Start();
+            ffmpegProcess.WaitForExit();
+            if (!ffmpegProcess.HasExited)
+            {
+                ffmpegProcess.Kill();
+            }
+            tbStatus.ScrollToCaret();
+            Application.DoEvents();
         }
     }
 }
