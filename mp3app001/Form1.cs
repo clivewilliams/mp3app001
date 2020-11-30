@@ -30,7 +30,7 @@ namespace mp3app001
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            MessageBox.Show("Version 004", "MP3 App", MessageBoxButtons.OK);
+            MessageBox.Show("Version 005", "MP3 App", MessageBoxButtons.OK);
         }
 
         int line = 0;
