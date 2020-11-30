@@ -716,10 +716,11 @@ namespace mp3app001
             string readdir = tbVideoDir.Text;
             string mp3dir = tbMP3Dir.Text;
 
-            MP3Dirs(readdir, mp3dir);
+            MP3Dirs(readdir, mp3dir, ".mp4");
+            MessageBox.Show("Done.", "MP3 App", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        private void MP3Dirs(string readdir, string mp3dir)
+        private void MP3Dirs(string readdir, string mp3dir, string suffix)
         {
             if (Directory.Exists(readdir))
             {
@@ -727,13 +728,13 @@ namespace mp3app001
                 DirectoryInfo di = new DirectoryInfo(readdir);
                 foreach (DirectoryInfo di2 in di.GetDirectories())
                 {
-                    MP3Dirs(Path.Combine(readdir, di2.Name), Path.Combine(mp3dir, di2.Name));
+                    MP3Dirs(Path.Combine(readdir, di2.Name), Path.Combine(mp3dir, di2.Name), suffix);
                 }
                 foreach (FileInfo fi2 in di.GetFiles())
                 {
-                    if (fi2.Name.EndsWith(".mp4"))
+                    if (fi2.Name.ToLower().EndsWith(suffix))
                     {
-                            MP3Files(Path.Combine(readdir, fi2.Name), Path.Combine(mp3dir, Path.GetFileNameWithoutExtension(fi2.FullName) + ".mp3"));
+                            MP3Files(Path.Combine(readdir, fi2.Name), Path.Combine(mp3dir, Path.GetFileNameWithoutExtension(fi2.FullName) + ".mp3"), suffix);
                     }
                 }
             }
@@ -745,7 +746,7 @@ namespace mp3app001
             }
         }
 
-        private void MP3Files(string readfile, string mp3file)
+        private void MP3Files(string readfile, string mp3file, string suffix)
         {
             if (File.Exists(mp3file))
             {
@@ -770,6 +771,15 @@ namespace mp3app001
             }
             tbStatus.ScrollToCaret();
             Application.DoEvents();
+        }
+
+        private void btnConvertWav_Click(object sender, EventArgs e)
+        {
+            string readdir = tbInputs.Text;
+            string mp3dir = tbInputs.Text;
+
+            MP3Dirs(readdir, mp3dir, ".wav");
+            MessageBox.Show("Done.", "MP3 App", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }

@@ -28,6 +28,7 @@
         /// </summary>
         private void InitializeComponent()
         {
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(Form1));
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.quitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -60,6 +61,7 @@
             this.tbMP3Dir = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.tbVideoDir = new System.Windows.Forms.TextBox();
+            this.btnConvertWav = new System.Windows.Forms.Button();
             this.menuStrip1.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -335,7 +337,7 @@
             this.btnBuildMP3.Name = "btnBuildMP3";
             this.btnBuildMP3.Size = new System.Drawing.Size(103, 23);
             this.btnBuildMP3.TabIndex = 28;
-            this.btnBuildMP3.Text = "Build MP3";
+            this.btnBuildMP3.Text = "Convert MP4 >>";
             this.btnBuildMP3.UseVisualStyleBackColor = true;
             this.btnBuildMP3.Click += new System.EventHandler(this.btnBuildMP3_Click);
             // 
@@ -365,7 +367,7 @@
             this.label9.Name = "label9";
             this.label9.Size = new System.Drawing.Size(34, 13);
             this.label9.TabIndex = 25;
-            this.label9.Text = "Video";
+            this.label9.Text = "MP4s";
             // 
             // tbVideoDir
             // 
@@ -377,11 +379,23 @@
             this.tbVideoDir.TabIndex = 24;
             this.tbVideoDir.Text = "H:\\Plex\\Music Video";
             // 
+            // btnConvertWav
+            // 
+            this.btnConvertWav.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnConvertWav.Location = new System.Drawing.Point(439, 28);
+            this.btnConvertWav.Name = "btnConvertWav";
+            this.btnConvertWav.Size = new System.Drawing.Size(103, 23);
+            this.btnConvertWav.TabIndex = 29;
+            this.btnConvertWav.Text = "Convert WAV >>";
+            this.btnConvertWav.UseVisualStyleBackColor = true;
+            this.btnConvertWav.Click += new System.EventHandler(this.btnConvertWav_Click);
+            // 
             // Form1
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(770, 685);
+            this.Controls.Add(this.btnConvertWav);
             this.Controls.Add(this.btnBuildMP3);
             this.Controls.Add(this.label8);
             this.Controls.Add(this.tbMP3Dir);
@@ -411,6 +425,7 @@
             this.Controls.Add(this.label1);
             this.Controls.Add(this.tbInputs);
             this.Controls.Add(this.menuStrip1);
+            this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "Form1";
             this.Text = "MP3 App";
@@ -456,6 +471,7 @@
         private System.Windows.Forms.TextBox tbMP3Dir;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.TextBox tbVideoDir;
+        private System.Windows.Forms.Button btnConvertWav;
     }
 }
 
